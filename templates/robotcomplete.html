@@ -1,0 +1,23 @@
+<!doctype html>
+{% block head %}
+
+<link href="{{ css }}" rel="stylesheet" type="text/css" />
+
+{% endblock %}
+
+
+{% block body %}
+
+<body>
+
+<center>
+    <img src="{{ smlogo }}">
+        </center>
+<p>
+        Robot submitted! <A HREF="http://www.twitter.com/{{twitterhandle}}">{{ twitterhandle }}</A> is now in the census. Thanks for your submission.<br><br>
+        <A HREF="{{ pythonpage }}/botchive">View the botchive.</A>
+    </p>
+
+</body>
+
+{% endblock %}

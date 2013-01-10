@@ -1,0 +1,93 @@
+{% extends "header.html" %}
+
+
+{% block head %}
+
+<link href="{{ css }}" rel="stylesheet" type="text/css" />
+
+<title>{{ bothandle }} Info Page</title>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<link rel="stylesheet" type="text/css" href="http://visapi-gadgets.googlecode.com/svn/trunk/wordcloud/wc.css"/>
+<script type="text/javascript" src="http://visapi-gadgets.googlecode.com/svn/trunk/wordcloud/wc.js"></script>
+     <script type='text/javascript'>
+     google.load('visualization', '1', {'packages': ['geochart']});
+     google.setOnLoadCallback(drawMarkersMap);
+
+      function drawMarkersMap() {
+        var data = google.visualization.arrayToDataTable([
+        ['Country', 'Popularity'],
+            [ '{{ singlebot.bottimezone }}' , 1 ],
+        ]);
+
+        options = {
+        displayMode: 'markers',
+        showLegend: false,
+        legend: 'none',
+        markerOpacity: '0.5',
+        magnifyingGlass: {enable: true, zoomFactor: 5.0},
+        enableRegionInteractivity: true,
+        colorAxis: {colors: ['gray', 'gray']}
+      };
+
+        var chart = new google.visualization.GeoChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+    };
+    </script>
+
+
+{% endblock %}
+
+
+{% block content %}
+
+<div id="chart_div" style="float:left;width: 200px; height: 200px"></div>
+    </div>
+
+
+    <div style="float:left;width:550px;margin-left:15px">
+        
+        <table><tr>
+                   <td>
+                       <IMG SRC="{{ singlebot.imgurl }}"></td>
+                    <td valign="bottom"><span style="font-size:20px;font-weight:bold;"> {{ singlebot.botname }} </span>
+        <span style="font-style:italic">(<A HREF="http://www.twitter.com/{{ bothandle }}">@{{ bothandle }}</A>)</span></td></tr></table>
+        
+  
+        <table width="700"><tr><td>
+        <div style="float:left;width:350px;font-size:10pt">
+        <b>Home: </b> {{ singlebot.botlocation }}<br>
+        <b>Primary Language: </b>{{ singlebot.primarylanguage }}<br>
+        <b>Web Page: </b><A HREF="{{ singlebot.boturl }}">{{ singlebot.boturl }}</A><br>
+        </div>
+        </td>
+
+        <td>
+        <div style="float:left;width:300px;font-size:10pt">
+        <b>Followers: </b> {{ singlebot.followerscount }}<br>
+        <b>Following: </b> {{ singlebot.friendscount }}<br>
+        <B>Founded: </B> {{ singlebot.created_at }}<br>
+        </div>
+        </td></tr></table><br>
+        <b>Self Description: </b>{{ singlebot.botdesc }}<br>
+        <b>Discussion Topics: </b>{{ singlebot.discussiontopics }}<br>
+        <b>Keyword Triggers: </b>{{ singlebot.keywordtriggers }} <br>
+    </div>
+
+<div style="clear:both"></div>
+
+<div style="margin-left:150px">
+    <div class="botpagebuttons"><A HREF="{{ pythonpage }}/botchive/{{ bothandle }}/wiki">Wiki</A></div>
+    <div class="botpagebuttons"><A HREF="{{ pythonpage }}/botchive/{{ bothandle }}/basicstats">Basic Stats</A></div>
+    <div class="botpagebuttons"><A HREF="{{ pythonpage }}/botchive/{{ bothandle }}/conversations">Conversations</A></div>
+</div>
+
+<div style="clear:both"></div>
+
+<div style="margin-left:60px">
+{% block detailedcontent %}
+{% endblock %}
+</div>
+
+{% endblock %}
+
+

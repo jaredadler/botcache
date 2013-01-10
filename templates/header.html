@@ -1,0 +1,31 @@
+<!doctype html>
+{% block head %}
+
+<link href="{{ css }}" rel="stylesheet" type="text/css" />
+<title>BotCache (alpha)</title>
+
+{% endblock %}
+
+{% block body %}
+
+<center>
+<div class="headernav">
+    <A HREF="{{ pythonpage }}/index"><span style="position:fixed;left:25px;top:12px"><img src="{{ smlogo }}" height=30px>
+        <span class="botcachetitle"> BotCache</span><span style="font-size:8px;color:black">(alpha)</span></span></A>
+        <span class="navtext"><A HREF="{{ pythonpage }}/about">About</A> | <A HREF="{{ pythonpage }}/botcache">View the BotCache</A> | <A HREF="{{ pythonpage }}/botopia">State of Botopia</A> | <A HREF="{{ pythonpage }}/submit">Submit a New Bot</A> | <A HREF="{{ pythonpage }}/blog">Blog</A>
+    </span>
+    
+    <span style="position:fixed;top:25px;left:800px;"><a href="https://twitter.com/botcache" class="twitter-follow-button" data-show-count="true">Follow @BotCache</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+</span>
+</div>
+</center>
+
+<div style="clear:both;margin-top:75px;width:800px;margin-left:60px;">
+{% block content %}
+{% endblock %}
+</div>
+
+<div style="clear:both;margin-bottom:10px;"><BR><BR><BR><BR><BR></div>
+    
+{% endblock %}

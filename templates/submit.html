@@ -1,0 +1,24 @@
+{% extends "header.html" %}
+
+{% block content %}
+
+<center><IMG SRC="http://payload116.cargocollective.com/1/0/3384/4623670/InventionsForNana-02_1.jpg" height=400px></center>
+    
+<h1>Submit a New Bot</h1>
+    <p>
+      Do you have a bot you'd like us to consider for inclusion the BotCache? Enter its Twitter handle here, and you'll be prompted with a few follow-up questions.  We'll then take a careful look with our special bot-analyzing microscope and add it!.
+        
+        </p>
+<center>
+
+    <form name="enterrobot" action ="{{ pythonpage }}/robotsubmission" method="post">
+<input name="twitterhandle" id="twitterhandle" type="text"></input><br><br>
+
+<input type="submit" value="BOTS, BE COUNTED!" class="button"/>
+
+</form>
+
+</center>
+
+
+{% endblock %}

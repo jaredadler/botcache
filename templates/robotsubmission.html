@@ -1,0 +1,82 @@
+{% extends "header.html" %}
+
+{% block content %}
+
+<body>
+
+
+<div style="float:left;width:800px;margin-left:100px;">
+
+<p>
+        This is the official bot submission form.  It is quick and easy, and your answers are protected by the laws of the Robot Federation. To proceed, please review the information about {{ botname }}.    </p>
+
+
+
+<div style="float:left;width:50px;height:50px">
+<IMG SRC="{{ imgurl }}">
+</div>
+<div style="float:left;width:600px;height:50px;vertical-align:-25px">
+  <span style="font-size:14pt;float:left;vertical-align:-25px">{{ botname }} (<A HREF="http://www.twitter.com/{{ twitterhandle }}">@{{ twitterhandle }}</A>)</span>
+</div>
+
+<hr style="clear:both;border:dotted;width:600px" align="left">
+<form name="submitbot" action ="{{ pythonpage }}/robotcomplete" method="post">
+<p>
+
+<b>Bot Name</b><br>
+<input type="text" name="botname" size="100" readonly="readonly" value="{{ botname }}"><br>
+                                                                                                        
+<b>Bot Handle</b><br>
+<input type="text" name="bothandle" size="100" readonly="readonly" value="@{{ twitterhandle }}"><br>
+                                                                                                        
+<b>Bot Image</b><br>
+<input type="text" name="imgurl" size="100" readonly="readonly" value="{{ imgurl }}"><br>
+                                                                                                         
+<b>Bot Location</b><br>
+<input type="text" name="botlocation" size="100" readonly="readonly" value="{{ botlocation }}"><br>
+                                                                                                         
+<b>Bot Description</b><br>
+<input type="text" name="botdesc" size="100" readonly="readonly" value="{{ botdesc }}"><br>
+                                                                                                         
+<b>Bot Creation Date</b><br>
+<input type="text" name="created_at" size="100" readonly="readonly" value="{{ created_at }}"><br>
+                                                                                                         
+<b>Bot Friends</b><br>
+<input type="text" name="followerscount" size="100" readonly="readonly" value="{{ followerscount }}"><br>
+                                                                                                         
+<b>Bot Followers</b><br>
+<input type="text" name="friendscount" size="100" readonly="readonly" value="{{ friendscount }}"><br>
+                                                                                                         
+<b>Bot URL</b><br>
+<input type="text" name="boturl" size="100" readonly="readonly" value="{{ boturl }}"><br>
+
+<b>Bot Time Zone</b><br>
+<input type="text" name="bottimezone" size="100" readonly="readonly" value="{{ bottimezone }}"><br>
+                                                                                                       
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+    
+<br>
+    <hr style="width:600px" align="left"></hr>
+<p>
+Since bots sometimes have trouble speaking for themselves, we need you to help this bot fill out a little more information.</p>
+    
+
+                                
+<b>Primary Language</b><br>
+<input type="text" name="primarylanguage" size="100"><br>        
+                                
+<b>Discussion Topics</b><br>
+<input type="text" name="discussiontopics" size="100"><br>
+                                                                                            
+<b>Keyword Triggers</b> (Separate with commas)<br>
+<input type="text" name="keywordtriggers" size="100"><br>
+                                                         
+                                              
+</p>
+
+<input type="submit" value="SUBMIT BOT FOR EVALUATION" class="button"/>
+</form>
+</div>
+</body>
+
+{% endblock %}

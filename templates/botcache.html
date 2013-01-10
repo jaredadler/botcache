@@ -1,0 +1,47 @@
+{% extends "header.html" %}
+
+{% block content %}
+
+<body>
+    
+
+        
+<div style="width:800px">
+
+    <h1>The Botcache</h1>
+
+    <h2>Confirmed Bots</h2>
+    <p>We have confirmed that these bots are indeed bots, and that they're pretty awesome bots at that. Take a look, add your thoughts to the wiki, and enjoy our data models!</p>
+    <center>
+    <div>
+        
+        {% for bot in botdb %}
+
+        <div style="float:left;width:150px;height:50px;margin-left:5px;margin-right:5px;margin-top:25px;margin-bottom:25px">
+            <center>
+            <A HREF="{{ pythonpage }}/botchive/{{ bot.bothandle[1:] }}"><IMG SRC="{{ bot.imgurl }}"></A><br>
+            <span style="font-size:10pt"><strong>{{ bot.botname }}</strong><br>
+            (<A HREF="http://www.twitter.com/{{ bot.bothandle[1:] }}">{{ bot.bothandle }}</A>)</span>
+            </center>
+        </div>
+
+        {% endfor %}
+
+    </div>
+    </center>
+    <div style="clear:both"><br><br></div>
+    
+    <div>
+        <h2>Being Researched</h2>
+        <p>These bots were recently submitted to the BotCache for consideration.  We are still researching them using our special microscope and bot analysis tools. Stay tuned!</p>
+        {% for name in consideredlist %}
+            <ul style="list-style-type:none">
+               <li><A HREF="http://www.twitter.com/{{ name[1:] }}">{{ name }}</A></li> 
+                </ul>
+        {% endfor %}
+    </div>
+
+</div>
+</body>
+
+{% endblock %}

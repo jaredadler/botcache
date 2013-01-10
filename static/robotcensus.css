@@ -1,0 +1,123 @@
+body {
+	width:1000px;
+        height:100%;
+	font-family:"courier new",courier,serif;
+	font-size:10pt;
+	color:black;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top:2%;
+	margin-bottom:2%;
+	min-width: 850px;
+}
+
+P {
+        font-family:"courier new",courier,serif;
+	font-size:10pt;
+	color:black;
+}
+
+A:link {
+    color:gray;
+}
+
+A:visited {
+    color:gray;
+}
+
+A:hover {
+    color:black;
+}
+
+A:active {
+    color:black;
+}
+
+.headernav {
+    position:fixed;
+    top:0;
+    padding-top:5px;
+    left:0;
+    width:100%;
+    height:50px;
+    background-color:#F0F0F0;
+    font-size:10pt;
+    z-index: 10;
+    }
+    
+.twitterlink A {
+    color:red;
+    }
+    
+.navtext {
+    position:fixed;
+    top:31px;
+    left:250px;
+    font-size:9pt;
+    }
+
+.navtext A {
+        text-decoration:none;
+        }
+        
+.botcachetitle, .botcachetitle A {
+    font-size:20pt;
+    color:black;
+    }
+
+.button {
+    border: 1px dotted;
+    background: white;
+    font-family:"courier new",courier,serif;
+    font-size:9pt;
+}
+.button:hover {
+    border: 1px solid black;
+}
+
+.selectno {
+    border: 0;
+    font-family:"courier new",courier,serif;
+}
+
+.teambox {
+    float:left;
+    width:200px;
+    margin-left:25px;
+    margin-right:25px;
+    text-align:center;
+    }
+    
+.teambox p {
+    text-align:left;
+    }
+    
+.teambox h1 {
+    font-size:12pt
+    }
+    
+.blogpost h1 {
+    font-size:14pt
+    }
+    
+.blogauthor {
+    font-style:italic;
+    font-size:8pt;
+    }
+    
+    
+.blogdatetime {
+    font-size:8pt;
+    }
+    
+.botpagebuttons {
+    float:left;
+    background-color:#E0E0E0 ;
+    width:200px;
+    text-align:center;
+    margin:15px 15px
+    }
+
+.botpagebuttons A {
+    text-decoration:none;
+    }

@@ -1,0 +1,194 @@
+{% extends "header.html" %}
+{% block head %}
+
+<link href="{{ css }}" rel="stylesheet" type="text/css" />
+    
+<script type='text/javascript' src='https://www.google.com/jsapi'></script>
+
+    <script type='text/javascript'>
+     google.load('visualization', '1', {'packages': ['geochart']});
+     google.setOnLoadCallback(drawMarkersMap);
+
+      function drawMarkersMap() {
+        var data = google.visualization.arrayToDataTable([
+        ['Country', 'Popularity'],
+        {% for timezone in timezones %}
+            [ '{{ timezone[0] }}' , {{ timezone[1] }} ],
+        {% endfor %}
+        ]);
+
+        options = {
+        displayMode: 'markers',
+        showLegend: true,
+        legend: 'none',
+        markerOpacity: '0.5',
+        magnifyingGlass: {enable: true, zoomFactor: 5.0},
+        enableRegionInteractivity: true,
+        colorAxis: {colors: ['gray', 'gray']}
+      };
+
+        var chart = new google.visualization.GeoChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+    };
+    </script>
+    
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawChart);
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+          ['Bot', 'Followers'],
+{% for bot in botdb %}
+            [ '{{ bot.bothandle }}' , {{ bot.followerscount }} ],
+        {% endfor %}
+        ]);
+
+        var options = {
+          colors: ['#686868', '#707070', '#787878', '#808080', '#888888', '#909090', '#989898'],
+          fontName: 'Courier',
+          legend: {position: 'none'},
+          chartArea: {left:0,top:0,width:'100%',height:'100%'},
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('followerschart'));
+        chart.draw(data, options);
+      }
+    </script>
+    
+    
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawChart);
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+          ['Bot', 'Friends'],
+{% for bot in botdb %}
+            [ '{{ bot.bothandle }}' , {{ bot.friendscount }} ],
+        {% endfor %}
+        ]);
+
+        var options = {
+          colors: ['#686868', '#707070', '#787878', '#808080', '#888888', '#909090', '#989898'],
+          fontName: 'Courier',
+          legend: {position: 'none'},
+          chartArea: {left:0,top:0,width:'100%',height:'100%'},
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('friendschart'));
+        chart.draw(data, options);
+      }
+    </script>
+    
+    <script type='text/javascript'>
+      google.load('visualization', '1', {packages:['gauge']});
+      google.setOnLoadCallback(drawChart);
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+          ['Label', 'Value'],
+          [' ', {{ followersum }}],
+        ]);
+
+        var options = {
+          width: 200, height: 200,
+          redFrom: 15000000, redTo: {{ kardashiancount }},
+          yellowFrom: 10000000, yellowTo: 15000000,
+          minorTicks: 100000,
+          max:{{ kardashiancount }},
+          min:0,
+        };
+
+        var chart = new google.visualization.Gauge(document.getElementById('kardashian'));
+        chart.draw(data, options);
+      }
+    </script>
+
+
+{% endblock %}
+
+{% block content %}
+
+<center>
+<h1>The State of Botopia</h1>
+<p>As of the most recent census, the State of Botopia has collected extensive data on its netizens.</p>
+
+<div id="chart_div" style="float:left;width: 600px; height: 500px; margin-right:25px"></div>
+
+    <script charset="utf-8" src="http://widgets.twimg.com/j/2/widget.js"></script>
+<script>
+new TWTR.Widget({
+  version: 2,
+  type: 'search',
+  search: ' {% for bot in botdb %}{{ bot.bothandle}} OR {% endfor %} @botworldcensus -RT',
+  interval: 30000,
+  title: ' ',
+  subject: 'Botversations',
+  width: 250,
+  height: 400,
+  theme: {
+    shell: {
+      background: '#D8D8D8',
+      color: '#ffffff'
+    },
+    tweets: {
+      background: '#ffffff',
+      color: '#444444',
+      links: 'black'
+    }
+  },
+  features: {
+    scrollbar: false,
+    loop: true,
+    live: true,
+    behavior: 'default'
+  }
+}).render().start();
+</script>
+
+<div style="clear:both">
+<hr>
+</div>
+
+
+<div style="clear:both">
+<p>
+<span style="font-size:50pt">{{ botcount }}</span><Br>
+<span style="font-size:14pt">Bots Counted</span>
+</p>
+</div>
+
+
+<div style="clear:both;width:1000px">
+    <div style="float:left;width: 475px; height: 350px;margin-right:25px">
+        <div id="followerschart" style="width: 300px; height: 300px"></div>
+        
+        <div style="width:300px;clear:both">
+            <p><span style="font-size:14pt"><strong>{{ followersum }}</strong><br>Total Bot Followers</span></p>
+        </div>
+        
+    </div>
+
+    <div style="float:left;width: 475px; height: 350px;margin-left:25px">
+        <div id="friendschart" style="width: 300px; height: 300px"></div>
+        
+        <div style="width:300px">
+            <p><span style="font-size:14pt"><strong>{{ friendsum }}</strong><br>Total Bot Friends</span></p>
+        </div>
+        
+    </div>
+</div>
+
+<div style="clear:both;">
+    <br><br>
+    <div id='kardashian' style="width: 200px; height: 200px"></div>
+    <div style="width:300px">
+        <p><span style="font-size:14pt"><strong>{{ kcoefficient }}</strong><br>Kardashian Coeffienct</span></p>
+    </div>
+</div>
+
+
+</center>
+
+
+</body>
+
+{% endblock %}

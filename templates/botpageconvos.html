@@ -1,0 +1,166 @@
+{% extends "botpage.html" %}
+
+
+{% block head %}
+
+<link href="{{ css }}" rel="stylesheet" type="text/css" />
+
+<title>{{ bothandle }} Info Page</title>
+
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<link rel="stylesheet" type="text/css" href="http://visapi-gadgets.googlecode.com/svn/trunk/wordcloud/wc.css"/>
+<script type="text/javascript" src="http://visapi-gadgets.googlecode.com/svn/trunk/wordcloud/wc.js"></script>
+    
+     <script type='text/javascript'>
+     google.load('visualization', '1', {'packages': ['geochart']});
+     google.setOnLoadCallback(drawMarkersMap);
+
+      function drawMarkersMap() {
+        var data = google.visualization.arrayToDataTable([
+        ['Country', 'Popularity'],
+            [ '{{ singlebot.bottimezone }}' , 1 ],
+        ]);
+
+        options = {
+        displayMode: 'markers',
+        showLegend: false,
+        legend: 'none',
+        markerOpacity: '0.5',
+        magnifyingGlass: {enable: true, zoomFactor: 5.0},
+        enableRegionInteractivity: true,
+        colorAxis: {colors: ['gray', 'gray']}
+      };
+
+        var chart = new google.visualization.GeoChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+    };
+    </script>
+
+
+{% endblock %}
+
+
+{% block detailedcontent %}
+
+<h2>Conversations</h2>
+<p>What sorts of conversations are the bots fostering with their Twitter friends? Here's a live sampling, with a little sentiment analysis and counts for lexical diversity thrown in.</p>
+<div style="clear:both;margin-left:25px">
+    <div style="float:left">
+    <script charset="utf-8" src="http://widgets.twimg.com/j/2/widget.js"></script>
+    <script>
+    new TWTR.Widget({
+      version: 2,
+      type: 'profile',
+      interval: 30000,
+      rpp: 30,
+      width: 225,
+      height: 375,
+      theme: {
+        shell: {
+          background: '#D8D8D8',
+          color: '#ffffff'
+        },
+        tweets: {
+          background: '#ffffff',
+          color: '#444444',
+          links: 'black'
+        }
+      },
+      features: {
+        scrollbar: true,
+        loop: true,
+        live: true,
+        behavior: 'default'
+      }
+    }).render().setUser('{{ singlebot.bothandle[0:] }}').start();
+    </script>
+    </div>
+        
+<div style="float:left;width:450px">
+    <div style="clear:both;margin-left:0px;margin-right:250px;margin-bottom:10px;margin-top:10px">
+        <center><p>
+        <span style="font-size:25pt">{{ tweetcomplexity }}</span><Br>
+        <span style="font-size:12pt">Unique Words</span>
+        </p></center>
+        <hr style="height:0.1px" noshade="noshade">
+    </div>
+
+    <div style="clear:both;margin-left:200px;margin-bottom:25px">
+        <center><p>
+        <span style="font-size:25pt">{{ replycomplexity }}</span><Br>
+        <span style="font-size:12pt">Unique Words</span>
+        </p></center>
+        <hr style="height:0.1px" noshade="noshade">
+    </div>
+
+    <div style="clear:both;">
+        <div style="clear:both;margin-left:0px;margin-right:135px;margin-bottom:25px">
+            <center><IMG SRC="{{htmlpage}}static/{{ botsentiment }}" width=75><br>
+            <span style="font-size:14pt">Sentiment</span></center>
+            <hr style="height:0.1px" noshade="noshade">
+        </div>
+        
+        <div style="clear:both;margin-left:250px;margin-right:0px">
+            
+            <center><IMG SRC="{{htmlpage}}static/{{ audiencesentiment }}" width=75><br>
+            <span style="font-size:14pt">Sentiment</span></center>
+            <hr style="height:0.1px" noshade="noshade">
+        </div>
+    </div>
+</div>
+        
+    <div style="float:left; z-index:-1">
+        <script charset="utf-8" src="http://widgets.twimg.com/j/2/widget.js"></script>
+    <script>
+    new TWTR.Widget({
+      version: 2,
+      type: 'search',
+      search: ' {{ singlebot.bothandle }} -RT',
+      interval: 30000,
+      title: 'Tweets to',
+      subject: '{{ singlebot.bothandle }}',
+      width: 225,
+      height: 375,
+      theme: {
+        shell: {
+          background: '#D8D8D8',
+          color: '#ffffff'
+        },
+        tweets: {
+          background: '#ffffff',
+          color: '#444444',
+          links: 'black'
+        }
+      },
+      features: {
+        scrollbar: true,
+        loop: true,
+        live: true,
+        behavior: 'default'
+      }
+    }).render().start();
+    </script>
+    </div>
+</div>
+
+
+<div style="clear:both"><br></div>
+
+<div>
+    <h2>Top 10 @Reply Words</h2>
+    <p>These are the most common words coming from the bot's followers. Does it mean anything? What does it suggest?</p>
+
+    <div style="margin-left:65px">
+        <ol>
+        {% for item in fd %}
+
+        <li><span style="font-weight:600">{{ item[0] }}</span> : {{ item[1] }} </li>
+
+        {% endfor %}
+        </ol>
+    </div>
+</div>
+
+{% endblock %}
+
+
