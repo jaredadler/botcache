@@ -9,6 +9,7 @@ import twitter
 import codecs
 import sys
 import shelve
+import feedparser
 
 #from collections import Counter
 
@@ -443,9 +444,9 @@ def botconversations(bothandle):
 def blogpage():
     print >> sys.stderr, "Received GET request to /blog."
     try:
-        img = pullrandimage('http://wememechina.tumblr.com/api/read?&num=10')
-        return render_template('blog.html',biglogo=biglogo,css=css,pythonpage=pythonpage,htmlpage=htmlpage,smlogo=smlogo,img=img
-                               )
+        botcachefeed = feedparser.parse('feed://botcache.tumblr.com/tagged/botcacheblog/rss')
+        botcachefeed = botcachefeed['entries']
+        return render_template('blog.html',biglogo=biglogo,css=css,pythonpage=pythonpage,htmlpage=htmlpage,smlogo=smlogo,botcachefeed=botcachefeed)
     except:
         print >> sys.stderr, str(sys.exc_info()[0]) # These write the nature of the error
         print >> sys.stderr, str(sys.exc_info()[1])

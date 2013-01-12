@@ -1,18 +1,24 @@
 {% extends "header.html" %}
 
+
 {% block content %}
+<div style="position:fixed;left:800px;top:75px"><iframe class="btn" frameborder="0" border="0" scrolling="no" allowtransparency="true" height="25" width="150" src="http://platform.tumblr.com/v1/follow_button.html?button_type=1&tumblelog=botcache&color_scheme=dark"></iframe>
+</div>
+
+<h1>BotCache Blog</h1>
+
+{% for post in botcachefeed %}
     
 <div class="blogpost">
     
-    <h1>Sample title</h1>
+    <h1><A HREF="{{post['link']}}">{{ post['title'] }}</A></h1>
     
-    <img src = {{ img }} >
+    {{ post['summary_detail']['value'] | safe }}
     
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin pellentesque, dui non lobortis pharetra, elit leo imperdiet diam, posuere luctus diam sapien non odio. Nullam porta purus eget dolor pellentesque vehicula. Praesent lobortis elit non odio iaculis quis tincidunt orci mattis. Maecenas sagittis tincidunt commodo. Morbi cursus vulputate purus non lobortis. Vestibulum libero elit, accumsan in sagittis et, porta eget nisl. Mauris sagittis diam ut velit convallis malesuada. Donec sapien turpis, tristique quis blandit vel, adipiscing eu nunc. Donec eget odio nisl. Nunc nulla libero, feugiat ac sollicitudin non, porttitor eu felis. Aenean luctus mattis sodales. Ut et sem sit amet odio adipiscing convallis. </p>
-    
-    <span class="blogauthor">Alex Bot</span> <span class="blogdatetime">08:04 AM, 8 Jan 2012</p>
-    
-    </div>
+    <span class="blogdatetime"><A HREF="{{post['link']}}">{{ post['published'][:-5] }}</A>
+<br><br><br>
+</div>
 
+{% endfor %}
 
 {% endblock %}
