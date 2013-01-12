@@ -55,7 +55,7 @@ biglogo = htmlpage + 'static/botworldcensusgraphic.png'
 def landingpage():
     print >> sys.stderr, "Received GET request to /."
     try:
-        BotDB = shelve.open('botcachedb')
+        BotDB = shelve.open('botcachedb2')
         ##BotDB = Bot.query.all()
         
         #This gets a count of bots based on the len of the BotDB
@@ -93,7 +93,7 @@ def robotsubmission():
             ##test = Bot.query.filter(Bot.bothandle == '@'+ str(twitterhandle)).first()
             ##testquery = str(test.bothandle[1:])
             ##print testquery
-            newshelf = shelve.open('botcachedb')
+            newshelf = shelve.open('botcachedb2')
             if twitterhandle in newshelf.keys():
                 return render_template('alreadyexists.html',twitterhandle=twitterhandle,css=css,smlogo=smlogo,\
                                                            pythonpage=pythonpage,htmlpage=htmlpage)
