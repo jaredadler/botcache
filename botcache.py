@@ -99,7 +99,10 @@ def robotsubmission():
             ##testquery = str(test.bothandle[1:])
             ##print testquery
             newshelf = shelve.open('botcachedb2')
-            if twitterhandle in newshelf.keys():
+            newnewshelf = []
+            for key in newshelf.keys():
+                newnewshelf.append(key.lower())
+            if twitterhandle.lower() in newnewshelf:
                 return render_template('alreadyexists.html',twitterhandle=twitterhandle,css=css,smlogo=smlogo,\
                                                            pythonpage=pythonpage,htmlpage=htmlpage)
             else:
@@ -440,6 +443,27 @@ def botconversations(bothandle):
         print >> sys.stderr, str(sys.exc_info()[0]) # These write the nature of the error
         print >> sys.stderr, str(sys.exc_info()[1])
         
+        
+@app.route('/botchive/<bothandle>/favorites')
+def botfavorites(bothandle):
+        newshelf = shelve.open('botcachedb2')
+    try:
+        singlebot = newshelf['@' + str(bothandle)]
+        discussiontopics = singlebot.discussiontopics[3:-2]
+        
+        y = jsonjson('https://api.twitter.com/1/statuses/user_timeline.json?count=200&screen_name=%s&include_rts=1&include_entities=true' % bothandle)
+        twittertimeline = []
+        for tweet in y:
+            if tweet['retweet_count'] > 3:
+                twittertimeline.append(tweet)
+        return render_template('botpagefavorites.html',css=css,smlogo=smlogo,bothandle=bothandle,\
+                               twittertimeline=twittertimeline,singlebot=singlebot,\
+                                   pythonpage=pythonpage,htmlpage=htmlpage)
+    except:
+        print >> sys.stderr, str(sys.exc_info()[0]) # These write the nature of the error
+        print >> sys.stderr, str(sys.exc_info()[1])
+
+
 @app.route('/blog')
 def blogpage():
     print >> sys.stderr, "Received GET request to /blog."
