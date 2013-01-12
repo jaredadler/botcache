@@ -42,8 +42,8 @@
       function drawChart() {
         var data = google.visualization.arrayToDataTable([
           ['Bot', 'Friends'],
-            [ 'Social/Public Replies' , {{ embeddedness[0] }} ],
-            [ 'Direct Replies', {{ embeddedness[1] - embeddedness[0] }} ],
+            [ 'Social/Public Replies' , {{ publicrepliescount }} ],
+            [ 'Direct Replies', {{ allrepliescount - publicrepliescount }} ],
         ]);
 
         var options = {
@@ -100,10 +100,10 @@
 <div style="clear:both;margin-top:50px">
     <div id="embedchart" style="width: 300px; height: 200px"></div>
     <span style="font-size:20pt">
-    {% if embeddedness[0] / embeddedness[1] == 1.0 %}
+    {% if publicrepliescount / allrepliescount == 1.0 %}
         Error Computing
     {% else %}
-        {{ embeddedness[0] / embeddedness[1]  }}
+        {{ publicrepliescount / allrepliescount  }}
     {% endif %}
     
     </span><br>

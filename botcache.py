@@ -56,29 +56,10 @@ biglogo = htmlpage + 'static/botworldcensusgraphic.png'
 def landingpage():
     print >> sys.stderr, "Received GET request to /."
     try:
-        newshelf = shelve.open('botcachedb2')
-        ##BotDB = Bot.query.all()
-        
-        #This gets a count of bots based on the len of the BotDB
-        ##botcount = len(BotDB)
-        botcount = 0
-        for bot in newshelf.values():
-            if bot.status == 'confirmed':
-                botcount += 1
-            else:
-                pass
-        
-        #Gets the sum of bot followers
-        followersum = []
-        ##for bot in BotDB:
-        ##    followersum.append(bot.followerscount)
-        for bot in newshelf.values():
-            if bot.status == 'confirmed':
-                followersum.append(bot.followerscount)
-            else:
-                pass
-        followersum = sum(followersum)
-        newshelf.close()
+        tallyshelf = shelve.open('botcachetallies2')
+        followersum = tallyshelf['followersum'][sorted(tallyshelf['followersum'])[-1]]
+        botcount = tallyshelf['botcount'][sorted(tallyshelf['botcount'])[-1]]
+        tallyshelf.close()
         
         return render_template('index.html',biglogo=biglogo,css=css,pythonpage=pythonpage,htmlpage=htmlpage,smlogo=smlogo,\
                                followersum=followersum,botcount=botcount)
@@ -211,40 +192,22 @@ def submitpage():
 @app.route('/botopia')
 def botopia():
     ##BotDB = Bot.query.all()
-    #This gets all the timezones and maps them into an array for the Google Map
-    timezonelist = []
-    result_dict = {}
     newshelf = shelve.open('botcachedb2')
+    tallyshelf = shelve.open('botcachetallies2')
+    
     BotDB = []
     for bot in newshelf.values():
         if bot.status == 'under consideration':
             pass
         else:
             BotDB.append(bot)
-            timezonelist.append(bot.bottimezone)
-    result_dict = dict( [ (i, timezonelist.count(i)) for i in set(timezonelist)])
-    timezones = result_dict.items()
     
-    #This gets a count of bots based on the len of the BotDB
-    botcount = len(BotDB)
-    
-    #Gets the sum of bot followers
-    followersum = []
-    for bot in BotDB:
-        followersum.append(bot.followerscount)
-    followersum = sum(followersum)
-    
-    #Gets the sum of bot friends
-    friendsum = []
-    for bot in BotDB:
-        friendsum.append(bot.friendscount)
-    friendsum = sum(friendsum)
-    
-    #Gets the Kardashian Count
-    kim = api.GetUser('kimkardashian')
-    kardashiancount = kim.GetFollowersCount()
-    kcoefficient = float(friendsum) / float(kardashiancount)
-    
+    followersum = tallyshelf['followersum'][sorted(tallyshelf['followersum'])[-1]]
+    friendsum = tallyshelf['friendsum'][sorted(tallyshelf['friendsum'])[-1]]
+    kardashiancount = tallyshelf['kardashiancount'][sorted(tallyshelf['kardashiancount'])[-1]]
+    kcoefficient = tallyshelf['kcoefficient'][sorted(tallyshelf['kcoefficient'])[-1]]
+    botcount = tallyshelf['botcount'][sorted(tallyshelf['botcount'])[-1]]
+    timezones = tallyshelf['timezones'][sorted(tallyshelf['timezones'])[-1]]
     #
     return render_template('botopia.html',botdb=BotDB,css=css,smlogo=smlogo,pythonpage=pythonpage,htmlpage=htmlpage,\
                            timezones=timezones,botcount=botcount,followersum=followersum,friendsum=friendsum,\
@@ -285,12 +248,15 @@ def botchive_singlebot(bothandle):
         ##singlebot = Bot.query.filter(Bot.bothandle == '@'+ str(bothandle)).first()
         newshelf = shelve.open('botcachedb2')
         singlebot = newshelf['@' + str(bothandle)]
-        discussiontopics = singlebot.discussiontopics[3:-2]
+        if singlebot.status != 'confirmed':
+            return "Still evaluating"
         
-        
-        #Return template
-        return render_template('botpage.html',css=css,smlogo=smlogo,bothandle=bothandle,singlebot=singlebot,\
-                                   pythonpage=pythonpage,htmlpage=htmlpage,discussiontopics=discussiontopics,)
+        else:
+            discussiontopics = singlebot.discussiontopics[3:-2]
+            
+            #Return template
+            return render_template('botpage.html',css=css,smlogo=smlogo,bothandle=bothandle,singlebot=singlebot,\
+                                       pythonpage=pythonpage,htmlpage=htmlpage,discussiontopics=discussiontopics,)
     except:
         print >> sys.stderr, str(sys.exc_info()[0]) # These write the nature of the error
         print >> sys.stderr, str(sys.exc_info()[1])
@@ -302,10 +268,13 @@ def singlebotwiki(bothandle):
         ##singlebot = Bot.query.filter(Bot.bothandle == '@'+ str(bothandle)).first()
         newshelf = shelve.open('botcachedb2')
         singlebot = newshelf['@' + str(bothandle)]
-        discussiontopics = singlebot.discussiontopics[3:-2]
-        #Return template
-        return render_template('botpagewiki.html',css=css,smlogo=smlogo,bothandle=bothandle,singlebot=singlebot,\
-                                   pythonpage=pythonpage,htmlpage=htmlpage,discussiontopics=discussiontopics)
+        if singlebot.status != 'confirmed':
+            return "Still evaluating"
+        else:
+            discussiontopics = singlebot.discussiontopics[3:-2]
+            #Return template
+            return render_template('botpagewiki.html',css=css,smlogo=smlogo,bothandle=bothandle,singlebot=singlebot,\
+                                       pythonpage=pythonpage,htmlpage=htmlpage,discussiontopics=discussiontopics)
     except:
         print >> sys.stderr, str(sys.exc_info()[0]) # These write the nature of the error
         print >> sys.stderr, str(sys.exc_info()[1])
@@ -316,58 +285,20 @@ def singlebotstats(bothandle):
         ##singlebot = Bot.query.filter(Bot.bothandle == '@'+ str(bothandle)).first()
         newshelf = shelve.open('botcachedb2')
         singlebot = newshelf['@' + str(bothandle)]
-        discussiontopics = singlebot.discussiontopics[3:-2]
-        
-        #Gets all the timeline stuff
-        y = jsonjson('https://api.twitter.com/1/statuses/user_timeline.json?count=100&screen_name=@%s' % str(bothandle))
-        twittertimeline = y
-        x = jsonjson('http://search.twitter.com/search.json?q=@%s%%20-RT&rpp=100&include_entities=true&result_type=mixed' % str(bothandle))
-        replytimeline = x['results']
-        retweettimeline = api.GetSearch('RT @' + str(bothandle))
-        
-        #Checks for multiple user handles as a sign of conversational embeddedness
-        embedtimeline = []
-        newreplytimeline = []
-        for reply in replytimeline:
-            newreplytimeline.append(reply['text'])
-        #print newreplytimeline
-        for reply in newreplytimeline:
-            try:
-                if reply.count('@') > 1:
-                    embedtimeline.append(reply)
-                elif reply.split()[0].lower() != "@" + str(bothandle):
-                    embedtimeline.append(reply)
-                else:
-                    print "Skipped " + reply + " in checking for embeddedness."
-            except:
-                print "Error"
-        embeddedness = (float(len(embedtimeline)), float(len(newreplytimeline)))
-        if embeddedness == 1:
-            embeddedness = "Error Calculating"
+        if singlebot.status != 'confirmed':
+            return "Still evaluating"
         else:
-            embeddedness = embeddedness
+            discussiontopics = singlebot.discussiontopics[3:-2]
+            botdatashelf = shelve.open('botdatadb')
+            publicrepliescount = botdatashelf[str(bothandle)]['publicrepliescount']
+            allrepliescount = botdatashelf[str(bothandle)]['allrepliescount']
+            googlechart = botdatashelf[str(bothandle)]['googlechart']
+            botdatashelf.close()
 
-        #Converts most recent 100 tweets and replies into a dict of the day of the month and tweet count.
-        recentrepliesdays = []
-        recenttweetsdays = []
-
-        for tweet in replytimeline:
-            recentrepliesdays.append(tweet['created_at'].split()[1])
-        for tweet in twittertimeline:
-            recenttweetsdays.append(tweet['created_at'].split()[2])
-        print recentrepliesdays
-        print recenttweetsdays
-        googlechart = {'30': [0, 0], '02': [0, 0], '03': [0, 0], '26': [0, 0], '01': [0, 0], '06': [0, 0], '07': [0, 0], '04': [0, 0], '05': [0, 0], '08': [0, 0], '09': [0, 0], '28': [0, 0], '29': [0, 0], '14': [0, 0], '24': [0, 0], '25': [0, 0], '27': [0, 0], '20': [0, 0], '21': [0, 0], '11': [0, 0], '10': [0, 0], '13': [0, 0], '12': [0, 0], '15': [0, 0], '22': [0, 0], '17': [0, 0], '16': [0, 0], '19': [0, 0], '18': [0, 0], '31': [0, 0], '23': [0, 0]}
-        for i in set(recentrepliesdays):
-            googlechart[i][0] = recentrepliesdays.count(i)
-        for i in set(recenttweetsdays):
-            googlechart[i][1] = recenttweetsdays.count(i)
-
-
-        #Return template
-        return render_template('botpagebasicstats.html',css=css,smlogo=smlogo,bothandle=bothandle,singlebot=singlebot,\
-                                   pythonpage=pythonpage,htmlpage=htmlpage,discussiontopics=discussiontopics,\
-                                               embeddedness=embeddedness,googlechart=googlechart)
+            #Return template
+            return render_template('botpagebasicstats.html',css=css,smlogo=smlogo,bothandle=bothandle,singlebot=singlebot,\
+                                       pythonpage=pythonpage,htmlpage=htmlpage,discussiontopics=discussiontopics,\
+                                                   googlechart=googlechart,publicrepliescount=publicrepliescount,allrepliescount=allrepliescount)
     except:
         print >> sys.stderr, str(sys.exc_info()[0]) # These write the nature of the error
         print >> sys.stderr, str(sys.exc_info()[1])
