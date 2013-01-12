@@ -446,7 +446,7 @@ def botconversations(bothandle):
         
 @app.route('/botchive/<bothandle>/favorites')
 def botfavorites(bothandle):
-        newshelf = shelve.open('botcachedb2')
+    newshelf = shelve.open('botcachedb2')
     try:
         singlebot = newshelf['@' + str(bothandle)]
         discussiontopics = singlebot.discussiontopics[3:-2]
