@@ -1,16 +1,16 @@
-# -*- coding: utf-8 -*-
-
 from flask import Flask
 from flask import escape, request, Response, url_for, render_template, flash, redirect, jsonify
-from flask.ext.login import LoginManager, login_user, logout_user, login_required, current_user
-from flask.ext import uploads
-from flask.ext.uploads import IMAGES, configure_uploads, patch_request_class
-from flaskext.mongoalchemy import MongoAlchemy
+#from flask.ext.login import LoginManager, login_user, logout_user, login_required, current_user
+#from flask.ext import uploads
+#from flask.ext.uploads import IMAGES, configure_uploads, patch_request_class
+
 import flask
 import twitter
 import codecs
 import sys
-from collections import Counter
+import shelve
+
+#from collections import Counter
 
 #brings in API key
 from tweetkey import api
@@ -21,14 +21,24 @@ import utilities
 from utilities import jsonjson, clean_up, word_feats, negids, posids, negfeats, posfeats, negcutoff, poscutoff, trainfeats, testfeats, classifier, pullrandimage, nltk
 
 app = Flask(__name__)
-app.config['MONGOALCHEMY_DATABASE'] = 'bot_library2'
+
+
+"""
+Commented out Mongo stuff for now while we figure out the server situation.
+Search for "##' to find the legacy Mongo code when it's time to restore it.
+
+from flaskext.mongoalchemy import MongoAlchemy
+import mongoalchemy
+from flaskext.mongoalchemy import MongoAlchemy
+
+app = Flask(__name__)
+app.config['MONGOALCHEMY_DATABASE'] = 'x'
+app.config['MONGOALCHEMY_USER'] = 'x'
+app.config['MONGOALCHEMY_PASSWORD'] = 'x'
+app.config['MONGOALCHEMY_SERVER_AUTH'] = False
 db = MongoAlchemy(app)
+"""
 
-
-###
-# Hardcoded web site variables, uncomment to get this working on the test server
-#htmlpage = 'http://50.116.10.109/~an/robotcensus/'
-#pythonpage = 'http://50.116.10.109/~an/p/robotcensus'
 
 #Local web site variables, uncomment to get this working when running locally
 htmlpage = '/'
@@ -41,20 +51,29 @@ biglogo = htmlpage + 'static/botworldcensusgraphic.png'
     
 
 
-@app.route('/index')
+@app.route('/')
 def landingpage():
-    print >> sys.stderr, "Received GET request to /index."
+    print >> sys.stderr, "Received GET request to /."
     try:
-        BotDB = Bot.query.all()
-    
+        BotDB = shelve.open('botcachedb')
+        ##BotDB = Bot.query.all()
+        
         #This gets a count of bots based on the len of the BotDB
-        botcount = len(BotDB)
+        ##botcount = len(BotDB)
+        botcount = 0
+        for bot in BotDB.values():
+            if bot['status'] == 'confirmed':
+                botcount += 1
         
         #Gets the sum of bot followers
         followersum = []
-        for bot in BotDB:
-            followersum.append(bot.followerscount)
+        ##for bot in BotDB:
+        ##    followersum.append(bot.followerscount)
+        for bot in BotDB.values():
+            if bot['status'] == 'confirmed':
+                followersum.append(bot['followerscount'])
         followersum = sum(followersum)
+        BotDB.close()
         
         return render_template('index.html',biglogo=biglogo,css=css,pythonpage=pythonpage,htmlpage=htmlpage,smlogo=smlogo,\
                                followersum=followersum,botcount=botcount)
@@ -68,18 +87,18 @@ def robotsubmission():
      # Twitter handle received
     if request.method == 'POST':
         try:
-            try:
-                #BotDB = shelve.open('botchive.db')
-                twitterhandle = request.form['twitterhandle']
-                print twitterhandle
-                test = Bot.query.filter(Bot.bothandle == '@'+ str(twitterhandle)).first()
-                print test
-                testquery = str(test.bothandle[1:])
-                print testquery
-                # Checks if bot already exists.
+            ##try:
+            # Checks if bot already exists.
+            twitterhandle = request.form['twitterhandle']
+            ##test = Bot.query.filter(Bot.bothandle == '@'+ str(twitterhandle)).first()
+            ##testquery = str(test.bothandle[1:])
+            ##print testquery
+            newshelf = shelve.open('botcachedb')
+            if twitterhandle in newshelf.keys():
                 return render_template('alreadyexists.html',twitterhandle=twitterhandle,css=css,smlogo=smlogo,\
                                                            pythonpage=pythonpage,htmlpage=htmlpage)
-            except:
+            else:
+            ##except:
                 try:
                     xx = jsonjson("http://api.twitter.com/1/users/show.json?screen_name=%s" % twitterhandle)
                     created_at = xx['created_at']
@@ -152,28 +171,16 @@ def robotcomplete():
                                                  primarylanguage = primarylanguage,\
                                                      keywordtriggers = keywordtriggers,\
                                                          discussiontopics = discussiontopics)
+            newshelf = shelve.open('botcachedb2',writeback = True)
+            newshelf[str(newbot.bothandle)] = newbot
         except:
             return "Error with botchive at consideration level"
-        newbot.save()
-        print Bot.query.all()[0].bothandle
+        ##newbot.save()
+        ##print Bot.query.all()[0].bothandle
         return render_template('robotcomplete.html', twitterhandle=bothandle,css=css,smlogo=smlogo,\
                                pythonpage=pythonpage,htmlpage=htmlpage)
     else:
         return "Error"
-    
-@app.route('/testtest')
-def test():
-    try:
-        print 'george'
-        a = Bot.query.all()
-        print a
-        b = Bot.query.filter(Bot.bothandle == '@csik').first()
-        print b
-        print b.bothandle
-        return "george"
-    except:
-        print >> sys.stderr, str(sys.exc_info()[0]) # These write the nature of the error
-        print >> sys.stderr, str(sys.exc_info()[1])
 
 @app.route('/about')
 def aboutpage():
@@ -195,12 +202,18 @@ def submitpage():
 
 @app.route('/botopia')
 def botopia():
-    BotDB = Bot.query.all()
+    ##BotDB = Bot.query.all()
     #This gets all the timezones and maps them into an array for the Google Map
     timezonelist = []
     result_dict = {}
-    for bot in BotDB:
-        timezonelist.append(bot.bottimezone)
+    newshelf = shelve.open('botcachedb2')
+    BotDB = []
+    for bot in newshelf.values():
+        if bot.status == 'under consideration':
+            pass
+        else:
+            BotDB.append(bot)
+            timezonelist.append(bot.bottimezone)
     result_dict = dict( [ (i, timezonelist.count(i)) for i in set(timezonelist)])
     timezones = result_dict.items()
     
@@ -233,11 +246,24 @@ def botopia():
 def viewbotcache():
     print >> sys.stderr, "Received GET request to /botcache."
     try:
-        BotDB = Bot.query.filter(Bot.status == 'confirmed').all()
-        considered = Bot.query.filter(Bot.status == 'under consideration').all()
+        ##BotDB = Bot.query.filter(Bot.status == 'confirmed').all()
+        ##considered = Bot.query.filter(Bot.status == 'under consideration').all()
+        ##consideredlist = []
+        ##for bot in considered:
+        ##    consideredlist.append(bot.bothandle)
+        
+        newshelf = shelve.open('botcachedb2')
+        BotDB = []
         consideredlist = []
-        for bot in considered:
-            consideredlist.append(bot.bothandle)
+        for bot in newshelf.values():
+            if bot.status == 'under consideration':
+                consideredlist.append(bot.bothandle)
+            elif bot.status == 'confirmed':
+                BotDB.append(bot)
+            else:
+                pass
+        newshelf.close()
+        
         return render_template('botcache.html',botdb=BotDB,consideredlist=consideredlist,css=css,smlogo=smlogo,pythonpage=pythonpage,htmlpage=htmlpage)
     except:
         print >> sys.stderr, str(sys.exc_info()[0]) # These write the nature of the error
@@ -248,7 +274,9 @@ def viewbotcache():
 def botchive_singlebot(bothandle):
     print >> sys.stderr, "Received GET request to '/botchive/<bothandle>."
     try:
-        singlebot = Bot.query.filter(Bot.bothandle == '@'+ str(bothandle)).first()
+        ##singlebot = Bot.query.filter(Bot.bothandle == '@'+ str(bothandle)).first()
+        newshelf = shelve.open('botcachedb2')
+        singlebot = newshelf['@' + str(bothandle)]
         discussiontopics = singlebot.discussiontopics[3:-2]
         
         
@@ -263,7 +291,9 @@ def botchive_singlebot(bothandle):
 def singlebotwiki(bothandle):
     print >> sys.stderr, "Received GET request to '/botchive/<bothandle>/wiki."
     try:
-        singlebot = Bot.query.filter(Bot.bothandle == '@'+ str(bothandle)).first()
+        ##singlebot = Bot.query.filter(Bot.bothandle == '@'+ str(bothandle)).first()
+        newshelf = shelve.open('botcachedb2')
+        singlebot = newshelf['@' + str(bothandle)]
         discussiontopics = singlebot.discussiontopics[3:-2]
         #Return template
         return render_template('botpagewiki.html',css=css,smlogo=smlogo,bothandle=bothandle,singlebot=singlebot,\
@@ -275,7 +305,9 @@ def singlebotwiki(bothandle):
 @app.route('/botchive/<bothandle>/basicstats')
 def singlebotstats(bothandle):
     try:
-        singlebot = Bot.query.filter(Bot.bothandle == '@'+ str(bothandle)).first()
+        ##singlebot = Bot.query.filter(Bot.bothandle == '@'+ str(bothandle)).first()
+        newshelf = shelve.open('botcachedb2')
+        singlebot = newshelf['@' + str(bothandle)]
         discussiontopics = singlebot.discussiontopics[3:-2]
         
         #Gets all the timeline stuff
@@ -335,7 +367,9 @@ def singlebotstats(bothandle):
 @app.route('/botchive/<bothandle>/conversations')
 def botconversations(bothandle):
     try:
-        singlebot = Bot.query.filter(Bot.bothandle == '@'+ str(bothandle)).first()
+        ##singlebot = Bot.query.filter(Bot.bothandle == '@'+ str(bothandle)).first()
+        newshelf = shelve.open('botcachedb2')
+        singlebot = newshelf['@' + str(bothandle)]
         discussiontopics = singlebot.discussiontopics[3:-2]
         
         #Gets all the timeline stuff

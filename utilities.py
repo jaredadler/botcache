@@ -13,10 +13,6 @@ from nltk.corpus import movie_reviews
 from nltk.corpus import stopwords
 import re
 
-app = Flask(__name__)
-app.config['MONGOALCHEMY_DATABASE'] = 'bot_library2'
-db = MongoAlchemy(app)
-
 #function to acquire the json for a web page at x. Useful for searching Twitter.
 def jsonjson(x):
      req = urllib2.Request(x)

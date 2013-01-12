@@ -1,12 +1,6 @@
-<!doctype html>
-{% block head %}
+{% extends "header.html" %}
 
-<link href="{{ css }}" rel="stylesheet" type="text/css" />
-
-{% endblock %}
-
-
-{% block body %}
+{% block content %}
 
 <body>
 
@@ -15,7 +9,7 @@
         </center>
 <p>
         Robot submitted! <A HREF="http://www.twitter.com/{{twitterhandle}}">{{ twitterhandle }}</A> is now in the census. Thanks for your submission.<br><br>
-        <A HREF="{{ pythonpage }}/botchive">View the botchive.</A>
+        <A HREF="{{ pythonpage }}/">View the BotCache.</A>
     </p>
 
 </body>
