@@ -55,25 +55,29 @@ biglogo = htmlpage + 'static/botworldcensusgraphic.png'
 def landingpage():
     print >> sys.stderr, "Received GET request to /."
     try:
-        BotDB = shelve.open('botcachedb2')
+        newshelf = shelve.open('botcachedb2')
         ##BotDB = Bot.query.all()
         
         #This gets a count of bots based on the len of the BotDB
         ##botcount = len(BotDB)
         botcount = 0
-        for bot in BotDB.values():
-            if bot['status'] == 'confirmed':
+        for bot in newshelf.values():
+            if bot.status == 'confirmed':
                 botcount += 1
+            else:
+                pass
         
         #Gets the sum of bot followers
         followersum = []
         ##for bot in BotDB:
         ##    followersum.append(bot.followerscount)
-        for bot in BotDB.values():
-            if bot['status'] == 'confirmed':
-                followersum.append(bot['followerscount'])
+        for bot in newshelf.values():
+            if bot.status == 'confirmed':
+                followersum.append(bot.followerscount)
+            else:
+                pass
         followersum = sum(followersum)
-        BotDB.close()
+        newshelf.close()
         
         return render_template('index.html',biglogo=biglogo,css=css,pythonpage=pythonpage,htmlpage=htmlpage,smlogo=smlogo,\
                                followersum=followersum,botcount=botcount)
