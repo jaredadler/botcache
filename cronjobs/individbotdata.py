@@ -16,13 +16,22 @@ from tweetkey import api
 from utilities import jsonjson, clean_up, word_feats, negids, posids, negfeats, posfeats, negcutoff, poscutoff, trainfeats, testfeats, classifier, pullrandimage, nltk
 
 
-#This opens the botcache db for analysis and then stores tallies onto a different shelve
+#This opens the botcache db for analysis and then stores individual bot data onto a different shelve
 botcacheshelf = shelve.open('../botcachedb2')
 botdatashelf = shelve.open('../botdatadb',writeback=True)
 
+#filters out just the confirmed bots
+BotDB = []
 for bot in botcacheshelf.values():
+    if bot.status == 'confirmed':
+        BotDB.append(bot)
+    else:
+        pass
+
+#Heavy lifting for the individual bot pages.
+for bot in BotDB:
     bothandle = bot.bothandle[1:]
-    botdatashelf[str(bothandle)] = {'allrepliescount':0,'publicrepliescount':0,'googlechart':{}}
+    botdatashelf[str(bothandle)] = {'allrepliescount':0,'publicrepliescount':0,'googlechart':{},'replycomplexity':0,'tweetcomplexity':0,'botsentiment':'','audiencesentiment':'','cleanreplies':[],'fd':[]}
 
     #Gets all the timeline stuff
     y = jsonjson('https://api.twitter.com/1/statuses/user_timeline.json?count=100&screen_name=@%s' % str(bothandle))
@@ -76,6 +85,57 @@ for bot in botcacheshelf.values():
         googlechart[i][1] = recenttweetsdays.count(i)
     botdatashelf[str(bothandle)]['googlechart'] = googlechart
 
+    #This is NLTK stuff for the Conversations page. Lots of heavy lifting here!
+    #Sets up a string of replies for NLTK interpretation
+    replytimelinenltk = []
+    for reply in replytimeline:
+        replytimelinenltk.append(reply['text'])
+    replytimelinenltk = str(replytimelinenltk)
+    replycomplexity = len(set(replytimelinenltk))
+    #print replytimelinenltk
+    botdatashelf[str(bothandle)]['replycomplexity'] = replycomplexity
+
+    #Cleans up replies for the word cloud
+    cleanreplies = clean_up(replytimelinenltk)
+    for x in cleanreplies:
+        if x == str(bothandle):
+            cleanreplies.remove(x)
+        else:
+            pass
+    cleanreplies = ' '.join(cleanreplies)
+    print cleanreplies
+    botdatashelf[str(bothandle)]['cleanreplies'] = cleanreplies
+
+    #Sets up a string of tweets for NLTK interpretation
+    tweettimelinenltk = []
+    for tweet in twittertimeline:
+        tweettimelinenltk.append(tweet['text'])
+    tweettimelinenltk = str(tweettimelinenltk)
+    tweetcomplexity = len(set(tweettimelinenltk))
+    #print tweettimelinenltk
+    botdatashelf[str(bothandle)]['tweetcomplexity'] = tweetcomplexity
+
+    #Calls the sentiment analysis stuff, marks as positive or negative
+    botsentiment = classifier.classify(word_feats(clean_up(tweettimelinenltk)))
+    if botsentiment == 'pos':
+        botsentiment = 'comedybot.png'
+    else:
+        botsentiment = 'tragedybot.png'
+    #print word_feats(clean_up(tweettimelinenltk))
+    #print botsentiment
+    audiencesentiment = classifier.classify(word_feats(clean_up(replytimelinenltk)))
+    if audiencesentiment == 'pos':
+        audiencesentiment = 'comedybot.png'
+    else:
+        audiencesentiment = 'tragedybot.png'
+    #print word_feats(clean_up(replytimelinenltk))
+    #print audiencesentiment
+    botdatashelf[str(bothandle)]['audiencesentiment'] = audiencesentiment
+    botdatashelf[str(bothandle)]['botsentiment'] = botsentiment
+
+    fd = nltk.FreqDist(cleanreplies.split(' '))
+    fd = fd.items()[0:10]
+    botdatashelf[str(bothandle)]['fd'] = fd
 
 
 botcacheshelf.close()

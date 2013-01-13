@@ -16,10 +16,9 @@ import feedparser
 #brings in API key
 from tweetkey import api
 
-#imports models and utilities
+#imports models
 from models import Bot
-import utilities
-from utilities import jsonjson, clean_up, word_feats, negids, posids, negfeats, posfeats, negcutoff, poscutoff, trainfeats, testfeats, classifier, pullrandimage, nltk
+
 
 app = Flask(__name__)
 
@@ -261,9 +260,9 @@ def botchive_singlebot(bothandle):
         print >> sys.stderr, str(sys.exc_info()[0]) # These write the nature of the error
         print >> sys.stderr, str(sys.exc_info()[1])
         
-@app.route('/botchive/<bothandle>/wiki')
+@app.route('/botchive/<bothandle>/summary')
 def singlebotwiki(bothandle):
-    print >> sys.stderr, "Received GET request to '/botchive/<bothandle>/wiki."
+    print >> sys.stderr, "Received GET request to '/botchive/<bothandle>/summary."
     try:
         ##singlebot = Bot.query.filter(Bot.bothandle == '@'+ str(bothandle)).first()
         newshelf = shelve.open('botcachedb2')
@@ -273,7 +272,7 @@ def singlebotwiki(bothandle):
         else:
             discussiontopics = singlebot.discussiontopics[3:-2]
             #Return template
-            return render_template('botpagewiki.html',css=css,smlogo=smlogo,bothandle=bothandle,singlebot=singlebot,\
+            return render_template('botpagesummary.html',css=css,smlogo=smlogo,bothandle=bothandle,singlebot=singlebot,\
                                        pythonpage=pythonpage,htmlpage=htmlpage,discussiontopics=discussiontopics)
     except:
         print >> sys.stderr, str(sys.exc_info()[0]) # These write the nature of the error
@@ -309,63 +308,20 @@ def botconversations(bothandle):
         ##singlebot = Bot.query.filter(Bot.bothandle == '@'+ str(bothandle)).first()
         newshelf = shelve.open('botcachedb2')
         singlebot = newshelf['@' + str(bothandle)]
-        discussiontopics = singlebot.discussiontopics[3:-2]
-        
-        #Gets all the timeline stuff
-        y = jsonjson('https://api.twitter.com/1/statuses/user_timeline.json?count=100&screen_name=@%s' % str(bothandle))
-        twittertimeline = y
-        x = jsonjson('http://search.twitter.com/search.json?q=@%s%%20-RT&rpp=100&include_entities=true&result_type=mixed' % str(bothandle))
-        replytimeline = x['results']
-        retweettimeline = api.GetSearch('RT @' + str(bothandle))
-        
-        #Sets up a string of replies for NLTK interpretation
-        replytimelinenltk = []
-        for reply in replytimeline:
-            replytimelinenltk.append(reply['text'])
-        replytimelinenltk = str(replytimelinenltk)
-        replycomplexity = len(set(replytimelinenltk))
-        #print replytimelinenltk
-        
-        #Cleans up replies for the word cloud
-        cleanreplies = clean_up(replytimelinenltk)
-        for x in cleanreplies:
-            if x == str(bothandle):
-                cleanreplies.remove(x)
-            else:
-                print "Clean clean clean"
-        cleanreplies = ' '.join(cleanreplies)
-        print cleanreplies
-        
-        #Sets up a string of tweets for NLTK interpretation
-        tweettimelinenltk = []
-        for tweet in twittertimeline:
-            tweettimelinenltk.append(tweet['text'])
-        tweettimelinenltk = str(tweettimelinenltk)
-        tweetcomplexity = len(set(tweettimelinenltk))
-        #print tweettimelinenltk
-        
-        #Calls the sentiment analysis stuff, marks as positive or negative
-        botsentiment = classifier.classify(word_feats(clean_up(tweettimelinenltk)))
-        if botsentiment == 'pos':
-            botsentiment = 'comedybot.png'
+        if singlebot.status != 'confirmed':
+            return "Still evaluating"
         else:
-            botsentiment = 'tragedybot.png'
-        #print word_feats(clean_up(tweettimelinenltk))
-        #print botsentiment
-        audiencesentiment = classifier.classify(word_feats(clean_up(replytimelinenltk)))
-        if audiencesentiment == 'pos':
-            audiencesentiment = 'comedybot.png'
-        else:
-            audiencesentiment = 'tragedybot.png'
-        #print word_feats(clean_up(replytimelinenltk))
-        #print audiencesentiment
+            discussiontopics = singlebot.discussiontopics[3:-2]
+            botdatashelf = shelve.open('botdatadb')
+            replycomplexity = botdatashelf[str(bothandle)]['replycomplexity']
+            tweetcomplexity = botdatashelf[str(bothandle)]['tweetcomplexity']
+            botsentiment = botdatashelf[str(bothandle)]['botsentiment']
+            audiencesentiment = botdatashelf[str(bothandle)]['audiencesentiment']
+            cleanreplies = botdatashelf[str(bothandle)]['cleanreplies']
+            fd = botdatashelf[str(bothandle)]['fd']
         
-        fd = nltk.FreqDist(cleanreplies.split(' '))
-        fd = fd.items()[0:10]
-
         #Return template
         return render_template('botpageconvos.html',css=css,smlogo=smlogo,bothandle=bothandle,singlebot=singlebot,\
-                               twittertimeline=twittertimeline,replytimeline=replytimeline,retweettimeline=retweettimeline,\
                                    pythonpage=pythonpage,htmlpage=htmlpage,discussiontopics=discussiontopics,\
                                        replycomplexity=replycomplexity,tweetcomplexity=tweetcomplexity,\
                                            botsentiment=botsentiment,audiencesentiment=audiencesentiment,\
