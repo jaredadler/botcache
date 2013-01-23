@@ -16,9 +16,9 @@ import feedparser
 #brings in API key
 from tweetkey import api
 
-#imports models
+#imports models and utilities
 from models import Bot
-
+from utilities import jsonjson
 
 app = Flask(__name__)
 
@@ -89,6 +89,7 @@ def robotsubmission():
             ##except:
                 try:
                     xx = jsonjson("http://api.twitter.com/1/users/show.json?screen_name=%s" % twitterhandle)
+                    created_at = ""
                     created_at = xx['created_at']
                     created_at = created_at.split()
                     created_at = str(created_at[1]) + " " + str(created_at[2]) + ", " + str(created_at[5]) + " " + str(created_at[3])
