@@ -15,7 +15,7 @@ def jsonjson(x):
 
 #function to acquire the json for a web page at x. Useful for searching Twitter.
 def jsonjson(x):
-     req = urllib2.Request(x)
+     req = urllib2.Request(x, {"Content-type": "application/json"})
      opener = urllib2.build_opener()
      instance = opener.open(req)
      return simplejson.load(instance)

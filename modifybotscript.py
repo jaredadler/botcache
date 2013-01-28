@@ -7,6 +7,7 @@ import twitter
 from tweetkey import api
 from utilities import jsonjson
 from models import Bot
+import urllib2, urllib, json, simplejson
 
 #This opens the botcache db for
 botcacheshelf = shelve.open('botcachedb2',writeback=True)
