@@ -231,11 +231,13 @@ def viewbotcache():
                 consideredlist.append(bot.bothandle)
             elif bot.status == 'confirmed':
                 BotDB.append(bot)
+            elif bot.status == 'not accepted':
+                notacceptedlist.append(bot.bothandle)
             else:
                 pass
         newshelf.close()
         
-        return render_template('botcache.html',botdb=BotDB,consideredlist=consideredlist,css=css,smlogo=smlogo,pythonpage=pythonpage,htmlpage=htmlpage)
+        return render_template('botcache.html',botdb=BotDB,consideredlist=consideredlist,notacceptedlist=notacceptedlist,css=css,smlogo=smlogo,pythonpage=pythonpage,htmlpage=htmlpage)
     except:
         print >> sys.stderr, str(sys.exc_info()[0]) # These write the nature of the error
         print >> sys.stderr, str(sys.exc_info()[1])

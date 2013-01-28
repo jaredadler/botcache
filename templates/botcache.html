@@ -41,6 +41,16 @@
         {% endfor %}
     </div>
 
+    <div>
+        <h2>Not Accepted</h2>
+        <p>These bots were considered but then ultimately not added to our BotCache.</p>
+        {% for name in notacceptedlist %}
+            <ul style="list-style-type:none">
+               <li><A HREF="http://www.twitter.com/{{ name[1:] }}">{{ name }}</A></li> 
+                </ul>
+        {% endfor %}
+    </div>
+
 </div>
 </body>
 
