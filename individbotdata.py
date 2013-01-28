@@ -8,13 +8,19 @@ import sys
 import shelve
 import feedparser
 import datetime
+import urllib2, urllib, json, simplejson
+import xml.dom.minidom as minidom
+import htmllib
+from random import choice
+import time
 
 
 import sys
 sys.path.append('../')
 sys.path.append('mysite/')
 from tweetkey import api
-from utilities import jsonjson, clean_up, pullrandimage
+from utilities import pullrandimage
+from models import Bot
 
 
 #imports NLTK fun
@@ -25,17 +31,20 @@ from nltk.corpus import stopwords
 import re
 
 
+#function to acquire the json for a web page at x. Useful for searching Twitter.
+def jsonjson(x):
+     #req = urllib2.Request(x, {"Content-type": "application/json"})
+     req = urllib2.Request(x)
+     opener = urllib2.build_opener()
+     instance = opener.open(req)
+     return simplejson.load(instance)
+
+now = datetime.datetime.now()
+
+
 #This opens the botcache db for analysis and then stores individual bot data onto a different shelve
 botcacheshelf = shelve.open('botcachedb2')
 botdatashelf = shelve.open('botdatadb',writeback=True)
-
-#filters out just the confirmed bots
-BotDB = []
-for bot in botcacheshelf.values():
-    if bot.status == 'confirmed':
-        BotDB.append(bot)
-    else:
-        pass
     
 #NLTK functions
 #used for NLTK sentiment analysis
@@ -66,115 +75,134 @@ def clean_up(text):
     return clean_uptext
 
 
+#filters out just the confirmed bots
+BotDB = []
+for bot in botcacheshelf.values():
+    if bot.status == 'confirmed':
+        BotDB.append(bot)
+    else:
+        pass
+
 #Heavy lifting for the individual bot pages.
+
+#This count limits the amount of times the script runs in case it goes apeshit.
+#The number is based on the length of the BotDB. 
+count = 1
 for bot in BotDB:
-    bothandle = bot.bothandle[1:]
-    botdatashelf[str(bothandle)] = {'allrepliescount':0,'publicrepliescount':0,'googlechart':{},'replycomplexity':0,'tweetcomplexity':0,'botsentiment':'','audiencesentiment':'','cleanreplies':[],'fd':[]}
+    if count < len(BotDB):
+        bothandle = bot.bothandle[1:]
+        print "Working on " + str(bothandle)
+        botdatashelf[str(bothandle)] = {'allrepliescount':0,'publicrepliescount':0,'googlechart':{},'replycomplexity':0,'tweetcomplexity':0,'botsentiment':'','audiencesentiment':'','cleanreplies':[],'fd':[],'last_update':datetime.datetime}
 
-    #Gets all the timeline stuff
-    y = jsonjson('https://api.twitter.com/1/statuses/user_timeline.json?count=100&screen_name=@%s' % str(bothandle))
-    twittertimeline = y
-    x = jsonjson('http://search.twitter.com/search.json?q=@%s%%20-RT&rpp=100&include_entities=true&result_type=mixed' % str(bothandle))
-    replytimeline = x['results']
-    retweettimeline = api.GetSearch('RT @' + str(bothandle))
-    
-    #Checks for multiple user handles as a sign of conversational embeddedness
-    embedtimeline = []
-    newreplytimeline = []
-    for reply in replytimeline:
-        newreplytimeline.append(reply['text'])
-    #print newreplytimeline
-    for reply in newreplytimeline:
-        try:
-            if reply.count('@') > 1:
-                embedtimeline.append(reply)
-            elif reply.split()[0].lower() != "@" + str(bothandle):
-                embedtimeline.append(reply)
-            else:
-                #print "Skipped " + reply + " in checking for embeddedness."
-                pass
-        except:
-            print "Error"
-    embeddedness = []
-    embeddedness = (float(len(embedtimeline)), float(len(newreplytimeline)))
-    if embeddedness == 1:
-        embeddedness = "Error Calculating"
-    else:
-        embeddedness = embeddedness
-        publicrepliescount = embeddedness[0]
-        allrepliescount = embeddedness[1]
-        botdatashelf[str(bothandle)]['publicrepliescount'] = int(publicrepliescount)
-        botdatashelf[str(bothandle)]['allrepliescount'] = int(allrepliescount)
+        #Gets all the timeline stuff
+        y = jsonjson('https://api.twitter.com/1/statuses/user_timeline.json?count=100&screen_name=@%s' % str(bothandle))
+        twittertimeline = y
+        x = jsonjson('http://search.twitter.com/search.json?q=@%s%%20-RT&rpp=100&include_entities=true&result_type=mixed' % str(bothandle))
+        replytimeline = x['results']
+        retweettimeline = api.GetSearch('RT @' + str(bothandle))
 
-    #Converts most recent 100 tweets and replies into a dict of the day of the month and tweet count.
-    recentrepliesdays = []
-    recenttweetsdays = []
-
-    for tweet in replytimeline:
-        recentrepliesdays.append(tweet['created_at'].split()[1])
-    for tweet in twittertimeline:
-        recenttweetsdays.append(tweet['created_at'].split()[2])
-    print recentrepliesdays
-    print recenttweetsdays
-    googlechart = {'30': [0, 0], '02': [0, 0], '03': [0, 0], '26': [0, 0], '01': [0, 0], '06': [0, 0], '07': [0, 0], '04': [0, 0], '05': [0, 0], '08': [0, 0], '09': [0, 0], '28': [0, 0], '29': [0, 0], '14': [0, 0], '24': [0, 0], '25': [0, 0], '27': [0, 0], '20': [0, 0], '21': [0, 0], '11': [0, 0], '10': [0, 0], '13': [0, 0], '12': [0, 0], '15': [0, 0], '22': [0, 0], '17': [0, 0], '16': [0, 0], '19': [0, 0], '18': [0, 0], '31': [0, 0], '23': [0, 0]}
-    for i in set(recentrepliesdays):
-        googlechart[i][0] = recentrepliesdays.count(i)
-    for i in set(recenttweetsdays):
-        googlechart[i][1] = recenttweetsdays.count(i)
-    botdatashelf[str(bothandle)]['googlechart'] = googlechart
-
-    #This is NLTK stuff for the Conversations page. Lots of heavy lifting here!
-    #Sets up a string of replies for NLTK interpretation
-    replytimelinenltk = []
-    for reply in replytimeline:
-        replytimelinenltk.append(reply['text'])
-    replytimelinenltk = str(replytimelinenltk)
-    replycomplexity = len(set(replytimelinenltk))
-    #print replytimelinenltk
-    botdatashelf[str(bothandle)]['replycomplexity'] = replycomplexity
-
-    #Cleans up replies for the word cloud
-    cleanreplies = clean_up(replytimelinenltk)
-    for x in cleanreplies:
-        if x == str(bothandle):
-            cleanreplies.remove(x)
+        #Checks for multiple user handles as a sign of conversational embeddedness
+        embedtimeline = []
+        newreplytimeline = []
+        for reply in replytimeline:
+            newreplytimeline.append(reply['text'])
+        #print newreplytimeline
+        for reply in newreplytimeline:
+            try:
+                if reply.count('@') > 1:
+                    embedtimeline.append(reply)
+                elif reply.split()[0].lower() != "@" + str(bothandle):
+                    embedtimeline.append(reply)
+                else:
+                    #print "Skipped " + reply + " in checking for embeddedness."
+                    pass
+            except:
+                print "Error"
+        embeddedness = []
+        embeddedness = (float(len(embedtimeline)), float(len(newreplytimeline)))
+        if embeddedness == 1:
+            embeddedness = "Error Calculating"
         else:
-            pass
-    cleanreplies = ' '.join(cleanreplies)
-    print cleanreplies
-    botdatashelf[str(bothandle)]['cleanreplies'] = cleanreplies
+            embeddedness = embeddedness
+            publicrepliescount = embeddedness[0]
+            allrepliescount = embeddedness[1]
+            botdatashelf[str(bothandle)]['publicrepliescount'] = int(publicrepliescount)
+            botdatashelf[str(bothandle)]['allrepliescount'] = int(allrepliescount)
 
-    #Sets up a string of tweets for NLTK interpretation
-    tweettimelinenltk = []
-    for tweet in twittertimeline:
-        tweettimelinenltk.append(tweet['text'])
-    tweettimelinenltk = str(tweettimelinenltk)
-    tweetcomplexity = len(set(tweettimelinenltk))
-    #print tweettimelinenltk
-    botdatashelf[str(bothandle)]['tweetcomplexity'] = tweetcomplexity
+        #Converts most recent 100 tweets and replies into a dict of the day of the month and tweet count.
+        recentrepliesdays = []
+        recenttweetsdays = []
 
-    #Calls the sentiment analysis stuff, marks as positive or negative
-    botsentiment = classifier.classify(word_feats(clean_up(tweettimelinenltk)))
-    if botsentiment == 'pos':
-        botsentiment = 'comedybot.png'
-    else:
-        botsentiment = 'tragedybot.png'
-    #print word_feats(clean_up(tweettimelinenltk))
-    #print botsentiment
-    audiencesentiment = classifier.classify(word_feats(clean_up(replytimelinenltk)))
-    if audiencesentiment == 'pos':
-        audiencesentiment = 'comedybot.png'
-    else:
-        audiencesentiment = 'tragedybot.png'
-    #print word_feats(clean_up(replytimelinenltk))
-    #print audiencesentiment
-    botdatashelf[str(bothandle)]['audiencesentiment'] = audiencesentiment
-    botdatashelf[str(bothandle)]['botsentiment'] = botsentiment
+        for tweet in replytimeline:
+            recentrepliesdays.append(tweet['created_at'].split()[1])
+        for tweet in twittertimeline:
+            recenttweetsdays.append(tweet['created_at'].split()[2])
+        print recentrepliesdays
+        print recenttweetsdays
+        googlechart = {'30': [0, 0], '02': [0, 0], '03': [0, 0], '26': [0, 0], '01': [0, 0], '06': [0, 0], '07': [0, 0], '04': [0, 0], '05': [0, 0], '08': [0, 0], '09': [0, 0], '28': [0, 0], '29': [0, 0], '14': [0, 0], '24': [0, 0], '25': [0, 0], '27': [0, 0], '20': [0, 0], '21': [0, 0], '11': [0, 0], '10': [0, 0], '13': [0, 0], '12': [0, 0], '15': [0, 0], '22': [0, 0], '17': [0, 0], '16': [0, 0], '19': [0, 0], '18': [0, 0], '31': [0, 0], '23': [0, 0]}
+        for i in set(recentrepliesdays):
+            googlechart[i][0] = recentrepliesdays.count(i)
+        for i in set(recenttweetsdays):
+            googlechart[i][1] = recenttweetsdays.count(i)
+        botdatashelf[str(bothandle)]['googlechart'] = googlechart
 
-    fd = nltk.FreqDist(cleanreplies.split(' '))
-    fd = fd.items()[0:10]
-    botdatashelf[str(bothandle)]['fd'] = fd
+        #This is NLTK stuff for the Conversations page. Lots of heavy lifting here!
+        #Sets up a string of replies for NLTK interpretation
+        replytimelinenltk = []
+        for reply in replytimeline:
+            replytimelinenltk.append(reply['text'])
+        replytimelinenltk = str(replytimelinenltk)
+        replycomplexity = len(set(replytimelinenltk))
+        #print replytimelinenltk
+        botdatashelf[str(bothandle)]['replycomplexity'] = replycomplexity
 
+        #Cleans up replies for the word cloud
+        cleanreplies = clean_up(replytimelinenltk)
+        for x in cleanreplies:
+            if x == str(bothandle):
+                cleanreplies.remove(x)
+            else:
+                pass
+        cleanreplies = ' '.join(cleanreplies)
+        print cleanreplies
+        botdatashelf[str(bothandle)]['cleanreplies'] = cleanreplies
+
+        #Sets up a string of tweets for NLTK interpretation
+        tweettimelinenltk = []
+        for tweet in twittertimeline:
+            tweettimelinenltk.append(tweet['text'])
+        tweettimelinenltk = str(tweettimelinenltk)
+        tweetcomplexity = len(set(tweettimelinenltk))
+        #print tweettimelinenltk
+        botdatashelf[str(bothandle)]['tweetcomplexity'] = tweetcomplexity
+
+        #Calls the sentiment analysis stuff, marks as positive or negative
+        botsentiment = classifier.classify(word_feats(clean_up(tweettimelinenltk)))
+        if botsentiment == 'pos':
+            botsentiment = 'comedybot.png'
+        else:
+            botsentiment = 'tragedybot.png'
+        #print word_feats(clean_up(tweettimelinenltk))
+        #print botsentiment
+        audiencesentiment = classifier.classify(word_feats(clean_up(replytimelinenltk)))
+        if audiencesentiment == 'pos':
+            audiencesentiment = 'comedybot.png'
+        else:
+            audiencesentiment = 'tragedybot.png'
+        #print word_feats(clean_up(replytimelinenltk))
+        #print audiencesentiment
+        botdatashelf[str(bothandle)]['audiencesentiment'] = audiencesentiment
+        botdatashelf[str(bothandle)]['botsentiment'] = botsentiment
+
+        fd = nltk.FreqDist(cleanreplies.split(' '))
+        fd = fd.items()[0:10]
+        botdatashelf[str(bothandle)]['fd'] = fd
+
+        botdatashelf[str(bothandle)]['last_update'] = now
+        count += 1
+        #This slows down the script to run every 90 seconds so it doesn't overload dreamhost's servers.
+        time.sleep(90)
+    print "Passed after " + str(count) + "tries."
 
 botcacheshelf.close()
 botdatashelf.close()

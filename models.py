@@ -49,3 +49,4 @@ class Bot(object):
         self.primarylanguage = primarylanguage
         self.keywordtriggers = keywordtriggers
         self.discussiontopics = discussiontopics
+        self.last_update = last_update
