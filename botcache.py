@@ -226,6 +226,7 @@ def viewbotcache():
         newshelf = shelve.open('botcachedb2')
         BotDB = []
         consideredlist = []
+        notacceptedlist = []
         for bot in newshelf.values():
             if bot.status == 'under consideration':
                 consideredlist.append(bot.bothandle)
